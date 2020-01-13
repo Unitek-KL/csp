@@ -126,11 +126,16 @@ void ${SDHC_INSTANCE_NAME}_InterruptHandler(void)
     uint32_t eistr = 0;
     SDHC_XFER_STATUS xferStatus = 0;
 
-    nistr = (${SDHC_INSTANCE_NAME}INTSTAT & 0x0000FFFF);
-    eistr = (${SDHC_INSTANCE_NAME}INTSTAT & 0xFFFF0000);
+    uint32_t tmp = ${SDHC_INSTANCE_NAME}INTSTAT;
+
+    /* Clear normal interrupt and error status bits */
+    ${SDHC_INSTANCE_NAME}INTSTAT = (tmp);
 
     /* Clear the transmit interrupt flag */
     ${SDHC_IFS_REG}CLR = ${SDHC_IFS_REG_MASK};
+    
+    nistr = (tmp & 0x0000FFFF);
+    eistr = (tmp & 0xFFFF0000);
 
     /* Save the error in a global variable for later use */
     ${SDHC_INSTANCE_NAME?lower_case}Obj.errorStatus |= eistr;
@@ -185,9 +190,6 @@ void ${SDHC_INSTANCE_NAME}_InterruptHandler(void)
             xferStatus |= SDHC_XFER_STATUS_DATA_COMPLETED;
         }
     }
-
-    /* Clear normal interrupt and error status bits that have been processed */
-    ${SDHC_INSTANCE_NAME}INTSTAT = (nistr | eistr);
 
     if ((${SDHC_INSTANCE_NAME?lower_case}Obj.callback != NULL) && (xferStatus > 0))
     {
